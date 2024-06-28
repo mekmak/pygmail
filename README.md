@@ -11,13 +11,13 @@ Heavily inspired by [Kriss "nu7hatch" Kowalik's GMail for Ruby library](https://
 ## Contributors
 
 * [Charlie Guo](https://github.com/charlierguo) - Author of the original python2 package
-* [Reuben Castelino](https://github.com/projectdelphai) - Edited by me to work with python3
+* [Reuben Castelino](https://github.com/projectdelphai) - Edited to work with python3
 
 ## Installation
 
 For now, installation is manual (`pip` support not yet implemented) and the only requirement is to use Python 3
 
-    git clone git://github.com/projectdelphai/gmail.git
+    git clone git://github.com/mekmak/pygmail.git
 
 ## Features
 
