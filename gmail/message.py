@@ -106,8 +106,6 @@ class Message():
         if name not in ['[Gmail]/Bin', '[Gmail]/Trash']:
             self.delete()
 
-
-
     def archive(self):
         self.move_to('[Gmail]/All Mail')
 
@@ -136,7 +134,7 @@ class Message():
             value.decode(encoding) if encoding else value
             for value, encoding in dh)
 
-    def parse(self, raw_message):
+    def parse(self, raw_message, include_body=False, include_attachments=False):
         raw_headers = raw_message[0].decode()
         raw_email = raw_message[1]
 
@@ -149,14 +147,15 @@ class Message():
 
         self.subject = self.parse_subject(self.message['subject'])
 
-        if self.message.get_content_maintype() == "multipart":
-            for content in self.message.walk():
-                if content.get_content_type() == "text/plain":
-                    self.body = content.get_payload(decode=True)
-                elif content.get_content_type() == "text/html":
-                    self.html = content.get_payload(decode=True)
-        elif self.message.get_content_maintype() == "text":
-            self.body = self.message.get_payload()
+        if include_body:
+            if self.message.get_content_maintype() == "multipart":
+                for content in self.message.walk():
+                    if content.get_content_type() == "text/plain":
+                        self.body = content.get_payload(decode=True)
+                    elif content.get_content_type() == "text/html":
+                        self.html = content.get_payload(decode=True)
+            elif self.message.get_content_maintype() == "text":
+                self.body = self.message.get_payload()
 
         self.sent_at = datetime.datetime.fromtimestamp(time.mktime(email.utils.parsedate_tz(self.message['date'])[:9]))
 
@@ -171,12 +170,12 @@ class Message():
 
         
         # Parse attachments into attachment objects array for this message
-        self.attachments = [
-            Attachment(attachment) for attachment in self.message._payload
-                if not isinstance(attachment, str) and attachment.get('Content-Disposition') is not None
-        ]
+        if include_attachments:
+            self.attachments = [
+                Attachment(attachment) for attachment in self.message._payload
+                    if not isinstance(attachment, str) and attachment.get('Content-Disposition') is not None
+            ]
         
-
     def fetch(self):
         if not self.message:
             response, results = self.gmail.imap.uid('FETCH', self.uid, '(BODY.PEEK[] FLAGS X-GM-THRID X-GM-MSGID X-GM-LABELS)')

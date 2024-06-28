@@ -164,7 +164,7 @@ class Gmail():
             keys = [decode_utf7(key) for key in keys]
         return keys
 
-    def inbox(self):
+    def inbox(self) -> Mailbox:
         return self.mailbox("INBOX")
 
     def spam(self):

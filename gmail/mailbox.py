@@ -1,3 +1,6 @@
+import sqlite3
+import itertools
+import traceback
 from .message import Message
 from .utf import encode as encode_utf7, decode as decode_utf7
 
@@ -22,7 +25,32 @@ class Mailbox():
             del vars(self)["external_name"]
         self.name = decode_utf7(value)
 
-    def mail(self, prefetch=False, **kwargs):
+    def download_metadata(self, **kwargs):        
+        emails = self.mail(prefetch=False, **kwargs)
+        print(f"Found {len(emails)} emails")
+        count = 0
+
+        conn = sqlite3.connect(".\\data\\emails.db")
+        try:
+            cur = conn.cursor()
+            for email in emails:
+                try:
+                    count += 1
+                    email.fetch()
+                    print(f"Saving ({count} / {len(emails)}).. [{email.sent_at}]")
+                    cur.execute(
+                        'INSERT INTO emails(email_id, sent_at, subject, sender) VALUES(:id, :sent_at, :subject, :sender) ON CONFLICT (email_id) DO UPDATE SET sent_at=:sent_at, subject=:subject, sender=:sender',
+                        {"id": str(email.uid), "sent_at": str(email.sent_at), "subject": email.subject, "sender": email.fr}
+                    )
+                    conn.commit()
+                except Exception as e:
+                    print(f"Failed to save email {email.uid}: {e} {traceback.format_stack()}")
+        finally:
+            conn.close()
+
+        print("Done")
+
+    def mail(self, prefetch=False, **kwargs) -> list[Message]:
         search = ['ALL']
 
         kwargs.get('read')   and search.append('SEEN')

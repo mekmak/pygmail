@@ -24,3 +24,6 @@ gmail.egg-info/
 
 ## Test Account details
 spec/account.yml
+creds/
+data/
+run.py
