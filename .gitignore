@@ -26,3 +26,4 @@ gmail.egg-info/
 spec/account.yml
 creds/
 data/
+run.py
