@@ -1,5 +1,6 @@
-import csv
+import sqlite3
 import itertools
+import traceback
 from .message import Message
 from .utf import encode as encode_utf7, decode as decode_utf7
 
@@ -27,27 +28,25 @@ class Mailbox():
     def download_metadata(self, **kwargs):        
         emails = self.mail(prefetch=False, **kwargs)
         print(f"Found {len(emails)} emails")
-        csv_lines = []
         count = 0
-        for email in emails:
-            count += 1
-            print(f"Processing ({count} / {len(emails)}).. \n")
-            email.fetch()
-            line = [
-                str(email.uid),
-                str(email.sent_at),
-                email.fr,
-                email.subject
-            ]
-            print(line)
-            csv_lines.append(line)
-        
-        metadata_path = '.\\data\\emails.csv'
-        print(f"Writing to {metadata_path}.. \n")
-        with open(metadata_path, 'w', encoding="utf-8") as f:
-            wr = csv.writer(f, quoting=csv.QUOTE_ALL)
-            wr.writerow(['UID', 'Sent At', 'From', 'Subject'])
-            wr.writerows(csv_lines)
+
+        conn = sqlite3.connect(".\\data\\emails.db")
+        try:
+            cur = conn.cursor()
+            for email in emails:
+                try:
+                    count += 1
+                    email.fetch()
+                    print(f"Saving ({count} / {len(emails)}).. [{email.sent_at}]")
+                    cur.execute(
+                        'INSERT INTO emails(email_id, sent_at, subject, sender) VALUES(:id, :sent_at, :subject, :sender) ON CONFLICT (email_id) DO UPDATE SET sent_at=:sent_at, subject=:subject, sender=:sender',
+                        {"id": str(email.uid), "sent_at": str(email.sent_at), "subject": email.subject, "sender": email.fr}
+                    )
+                    conn.commit()
+                except Exception as e:
+                    print(f"Failed to save email {email.uid}: {e} {traceback.format_stack()}")
+        finally:
+            conn.close()
 
         print("Done")
 
