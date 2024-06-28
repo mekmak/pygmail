@@ -1,3 +1,5 @@
+import csv
+import itertools
 from .message import Message
 from .utf import encode as encode_utf7, decode as decode_utf7
 
@@ -22,7 +24,34 @@ class Mailbox():
             del vars(self)["external_name"]
         self.name = decode_utf7(value)
 
-    def mail(self, prefetch=False, **kwargs):
+    def download_metadata(self, **kwargs):        
+        emails = self.mail(prefetch=False, **kwargs)
+        print(f"Found {len(emails)} emails")
+        csv_lines = []
+        count = 0
+        for email in emails:
+            count += 1
+            print(f"Processing ({count} / {len(emails)}).. \n")
+            email.fetch()
+            line = [
+                str(email.uid),
+                str(email.sent_at),
+                email.fr,
+                email.subject
+            ]
+            print(line)
+            csv_lines.append(line)
+        
+        metadata_path = '.\\data\\emails.csv'
+        print(f"Writing to {metadata_path}.. \n")
+        with open(metadata_path, 'w', encoding="utf-8") as f:
+            wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+            wr.writerow(['UID', 'Sent At', 'From', 'Subject'])
+            wr.writerows(csv_lines)
+
+        print("Done")
+
+    def mail(self, prefetch=False, **kwargs) -> list[Message]:
         search = ['ALL']
 
         kwargs.get('read')   and search.append('SEEN')

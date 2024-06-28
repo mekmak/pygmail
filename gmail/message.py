@@ -106,8 +106,6 @@ class Message():
         if name not in ['[Gmail]/Bin', '[Gmail]/Trash']:
             self.delete()
 
-
-
     def archive(self):
         self.move_to('[Gmail]/All Mail')
 
@@ -176,7 +174,6 @@ class Message():
                 if not isinstance(attachment, str) and attachment.get('Content-Disposition') is not None
         ]
         
-
     def fetch(self):
         if not self.message:
             response, results = self.gmail.imap.uid('FETCH', self.uid, '(BODY.PEEK[] FLAGS X-GM-THRID X-GM-MSGID X-GM-LABELS)')
